@@ -1,0 +1,3 @@
+"D:\Clion\CLion 2021.1\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\LSM.dir/objects.a
+C:\MinGW\bin\ar.exe cr CMakeFiles\LSM.dir/objects.a @CMakeFiles\LSM.dir\objects1.rsp
+C:\MinGW\bin\mingw32-g++.exe -g -Wl,--whole-archive CMakeFiles\LSM.dir/objects.a -Wl,--no-whole-archive -o LSM.exe -Wl,--out-implib,libLSM.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\LSM.dir\linklibs.rsp
