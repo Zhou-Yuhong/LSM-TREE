@@ -40,9 +40,9 @@ private:
 		for (i = 0; i < max; i+=2)
 			EXPECT(true, store.del(i));
 
+
 		for (i = 0; i < max; ++i)
-			EXPECT((i & 1) ? std::string(i+1, 's') : not_found,
-			       store.get(i));
+			EXPECT((i & 1) ? std::string(i+1, 's') : not_found,store.get(i));
 
 		for (i = 1; i < max; ++i)
 			EXPECT(i & 1, store.del(i));

@@ -16,7 +16,7 @@ void Level::make_sstable(Skiplist &skiplist) {
     vector<string> valueset;
     while(p){
         //sstable插入key,这个过程处理了挺多东西
-        sstable->addkey(p->key,p->del);
+        sstable->addkey(p->key);
         //先把value放在vector里
         valueset.push_back(p->val);
         p=p->right;
@@ -47,7 +47,6 @@ void Level::make_sstable(Skiplist &skiplist) {
         //写索引
         out.write((char*)&(sstable->searcharray[j].key),sizeof(uint64_t));
         out.write((char*)&(sstable->searcharray[j].offset),sizeof (uint32_t));
-        out.write((char*)&(sstable->searcharray[j].del),sizeof (bool));
     }
     //用于记录所有偏移量
     vector<unsigned int> offset_array;
@@ -61,8 +60,8 @@ void Level::make_sstable(Skiplist &skiplist) {
         offset_array.push_back(pos);
         //把string转成char*来存
         const char* input=valueset[j].c_str();
-        //这里size多留一个位置用于存字符串结束符(读的时候用)
-        out.write(input,valueset[j].size()+1);
+        //写val
+        out.write(input,valueset[j].size());
     }
         //在索引区写回偏移量,内存和硬盘都要写
     pos=32+10240+8;
@@ -70,14 +69,14 @@ void Level::make_sstable(Skiplist &skiplist) {
         sstable->searcharray[j].offset=offset_array[j];
         out.seekp(pos);
         out.write((char*)&(offset_array[j]),sizeof(unsigned int));
-        pos+=13;
+        pos+=12;
     }
     //把生成的sstable加入到level中的vector<Sstable*>中
     this->file[i]=sstable;
     this->is_create[i]=true;
 }
 
-std::string Level::get(uint64_t key,bool& if_del) {
+std::string Level::get(uint64_t key) {
     //若为空
     if(this->is_create[0]== false){
         return "";
@@ -96,14 +95,12 @@ std::string Level::get(uint64_t key,bool& if_del) {
         sstable=file[index];
         if(key<=sstable->header.max_key&&key>=sstable->header.min_key) {
             filename = "./DATA\\level_" + to_string(this->level_id) + "\\sstable_" + to_string(index);
-            result = this->file[index]->get(key, filename, if_del);
+            result = this->file[index]->get(key, filename);
             //如果在一个sst中未查找到且并非被删除，则继续查找
-            if (result == "" && if_del == false) continue;
+            if (result == "") continue;
             else {
-                //如果是被删除的，则返回空
-                if (if_del) return "";
-                    //否则，查找到结果，返回结果
-                else return result;
+                //否则返回（这里返回可能是"~DELETED~"或者具体的值），反正是最新的
+                 return result;
             }
         }
         else{

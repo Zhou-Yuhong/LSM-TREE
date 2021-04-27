@@ -8,27 +8,15 @@
 #include <iostream>
 #include <io.h>
 using namespace std;
-void Skiplist::put( uint64_t key,  std::string val,bool if_del)
+void Skiplist::put( uint64_t key,  std::string val)
 {   //已经存在该key的情况
     Node* tr=fetch(key);
     if(tr!= nullptr){
-        if(tr->del){
             while(tr){
-            tr->del= false;
-            tr->key=key;
-            tr->val=val;
-            tr=tr->down;
-            }
-            return;
-        }
-        else{
-            while(tr){
-                tr->key=key;
                 tr->val=val;
                 tr=tr->down;
             }
             return;
-        }
     }
     //不存在该key，插入该key
     vector<Node*> pathList;    //从上至下记录搜索路径
@@ -46,15 +34,7 @@ void Skiplist::put( uint64_t key,  std::string val,bool if_del)
     while (insertUp && pathList.size() > 0) {   //从下至上搜索路径回溯，50%概率
         Node* insert = pathList.back();
         pathList.pop_back();
-        //插入的不是删除结点
-        if(!if_del) {
-            insert->right = new Node(insert->right, downNode, key, val); //add新结点
-        }
-        //插入的是删除结点
-        else{
-            insert->right=new Node(insert->right, downNode, key, val);
-            insert->right->del=true;
-        }
+        insert->right = new Node(insert->right, downNode, key, val); //add新结点
         downNode = insert->right;    //把新结点赋值为downNode
         insertUp = (rand() & 1);   //50%概率
     }
@@ -65,7 +45,7 @@ void Skiplist::put( uint64_t key,  std::string val,bool if_del)
         head->down = oldHead;
     }
     //增加一个新的元素后cap的增加量
-    this->cap+=(13+val.length()+1);
+    this->cap+=(12+val.length()+1);
 }
 
 std::string* Skiplist::get(const uint64_t & key)
@@ -82,7 +62,7 @@ std::string* Skiplist::get(const uint64_t & key)
         }
         p = p->down;
     }
-    if (flag&&!(p->del)) {
+    if (flag) {
         return &(p->right->val);
     }
     else
@@ -104,7 +84,7 @@ bool Skiplist::del(const uint64_t & key)
 //        while (p->right && p->right != tmp) {
 //            p = p->right;
 //        }
-      p->del=true;
+      p->val="~DELETED~";
       p=p->down;
     }
     return true;
@@ -168,7 +148,7 @@ Sstable *Skiplist::translate() {
     vector<string> valueset;
     while(p){
         //sstable插入key
-         sstable->addkey(p->key,p->del);
+         sstable->addkey(p->key);
          //先把value放在vector里
          valueset.push_back(p->val);
          p=p->right;
@@ -196,7 +176,6 @@ Sstable *Skiplist::translate() {
         //写索引
         out.write((char*)&(sstable->searcharray[i].key),sizeof(uint64_t));
         out.write((char*)&(sstable->searcharray[i].offset),sizeof (uint32_t));
-        out.write((char*)&(sstable->searcharray[i].del),sizeof (bool));
     }
     //用于记录所有偏移量
     vector<unsigned int> offset_array;
@@ -211,7 +190,7 @@ Sstable *Skiplist::translate() {
        //把string转成char*来存
        const char* input=valueset[i].c_str();
        //这里size多留一个位置用于存字符串结束符
-       out.write(input,valueset[i].size()+1);
+       out.write(input,valueset[i].size());
     }
     //测试
 //    out.close();
@@ -226,27 +205,27 @@ Sstable *Skiplist::translate() {
         sstable->searcharray[i].offset=offset_array[i];
         out.seekp(pos);
         out.write((char*)&(offset_array[i]),sizeof(unsigned int));
-        pos+=13;
+        pos+=12;
     }
     return sstable;
 }
 
-void Skiplist::showtree() {
-    Node* p=head;
-    Node* q;
-    while(p){
-        q=p->right;
-        while(q){
-            if(q->del){
-                cout<<"del ";
-            }
-            else cout<<q->key<<" ";
-            q=q->right;
-        }
-        cout<<endl;
-        p=p->down;
-    }
-}
+//void Skiplist::showtree() {
+//    Node* p=head;
+//    Node* q;
+//    while(p){
+//        q=p->right;
+//        while(q){
+//            if(q->del){
+//                cout<<"del ";
+//            }
+//            else cout<<q->key<<" ";
+//            q=q->right;
+//        }
+//        cout<<endl;
+//        p=p->down;
+//    }
+//}
 
 unsigned int Skiplist::getcap() {
     return this->cap;

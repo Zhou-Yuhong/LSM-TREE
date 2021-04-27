@@ -27,15 +27,12 @@ struct Header
 struct Searcher {
     uint64_t key=0;
     uint32_t offset=0;
-    bool del = false;
-    Searcher(uint64_t key,uint32_t offset,bool del=false){
+    Searcher(uint64_t key,uint32_t offset){
         this->key=key;
         this->offset=offset;
-        this->del=del;
     }
-    Searcher(uint64_t key,bool del){
+    Searcher(uint64_t key){
         this->key=key;
-        this->del=del;
     }
     Searcher();
 };
@@ -59,14 +56,14 @@ public:
     //vector<unsigned int> gethash(uint64_t num);
     void  gethash(uint64_t num);
     //找键值为key的准备工作,第二个参数标明索引下标，第三个参数标明是否删除，通过返回值和if_del区分删除、找到、未找到三种情况
-    bool getoffset(uint64_t key,int & index,bool & if_del);
+    bool getoffset(uint64_t key,int & index);
     //返回键值为key的value,未找到返回空的string,第二个参数为打开的文件名，第三个参数标记是否删除
-    std::string get(uint64_t key,string filename,bool & if_del);
+    std::string get(uint64_t key,string filename);
     //设置bloom filter的位
     void setfilter(uint64_t key);
 
     //生成Sstable的辅助函数，对应的value先暂时放在skiplist的内存中，有两者下标的对应关系
-    void addkey(uint64_t key,bool del=false);
+    void addkey(uint64_t key);
 
     Sstable(){
         this->header.time=time;

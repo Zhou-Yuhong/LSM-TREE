@@ -34,7 +34,7 @@ public:
     //判断一层是否满了
     bool if_full();
     //找到最新的value
-    std::string get(uint64_t key,bool& if_del);
+    std::string get(uint64_t key);
 };
 
 

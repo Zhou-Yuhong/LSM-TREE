@@ -44,8 +44,8 @@ Bloomfilter::~Bloomfilter()
 {
     //delete bitarray;
 }
-//如果未找到返回false,找到的话，不管删除没删除，都返回true
-bool Sstable::getoffset(uint64_t key, int &index,bool & if_del)
+//如果未找到返回false,找到的话，返回true
+bool Sstable::getoffset(uint64_t key, int &index)
 {
     if (key > this->header.max_key || key < this->header.min_key) return false;
     //用bloomfilter判断key是否存在
@@ -60,7 +60,6 @@ bool Sstable::getoffset(uint64_t key, int &index,bool & if_del)
     while(left<=right){
         int mid=(left+right)/2;
         if(searcharray[mid].key==key){
-                if_del=searcharray[mid].del;
                 index=mid;
                 return true;
         }
@@ -100,24 +99,23 @@ void Sstable::setfilter(uint64_t key) {
      return;
 }
 //跳表生成Sstable的辅助函数
-void Sstable::addkey(uint64_t key,bool del) {
+void Sstable::addkey(uint64_t key) {
    //更新头部
    this->header.updatehead(key);
    //布隆过滤器
    this->setfilter(key);
    //索引区加一
-   Searcher search(key,del);
+   Searcher search(key);
    this->searcharray.push_back(search);
 }
 
-std::string Sstable::get(uint64_t key,string filename,bool & if_del) {
+std::string Sstable::get(uint64_t key,string filename) {
 //    string filename="data\\0\\test.sst";
     int index=0;
     //读的大小
     unsigned int size;
-    if(this->getoffset(key,index,if_del)){
-        //如果在这个sstable中，key对应的val被删除，则直接返回“ ”
-        if(if_del) return "";
+    if(this->getoffset(key,index)){
+        //如果存在该key
         ifstream in(filename,ios::in|ios::binary);
         unsigned int offset=this->searcharray[index].offset;
         //如果要读的是最后一个value
@@ -125,7 +123,8 @@ std::string Sstable::get(uint64_t key,string filename,bool & if_del) {
             in.seekg(0,ios_base::end);
             unsigned length=in.tellg();
          size=length-offset;
-         char* c=new char[size];
+         char* c=new char[size+1];
+         c[size]='\0';
          in.seekg(offset);
          in.read(c,size);
          std::string result=c;
@@ -135,7 +134,8 @@ std::string Sstable::get(uint64_t key,string filename,bool & if_del) {
         //若不是
         else{
             size=this->searcharray[index+1].offset-offset;
-            char* c=new char[size];
+            char* c=new char[size+1];
+            c[size]='\0';
             in.seekg(offset);
             in.read(c,size);
             std::string result=c;
@@ -144,6 +144,7 @@ std::string Sstable::get(uint64_t key,string filename,bool & if_del) {
         }
     }
     else{
+        //不存在返回空
         return "";
     }
 }
@@ -153,7 +154,6 @@ Sstable::Sstable(std::string filename) {
     //读入头部
     uint64_t numinput;
     uint32_t numinput_32;
-    bool del;
     in.read((char *)&numinput, sizeof(uint64_t));
     this->header.time=numinput;
     in.read((char *)&numinput, sizeof(uint64_t));
@@ -169,12 +169,9 @@ Sstable::Sstable(std::string filename) {
     for(unsigned int i=0;i<totlenum;i++){
         in.read((char *)&numinput, sizeof(uint64_t));
         in.read((char *)&numinput_32, sizeof(uint32_t));
-        in.read((char *)&del, sizeof(bool));
-        Searcher tmp=Searcher(numinput,numinput_32,del);
+        Searcher tmp=Searcher(numinput,numinput_32);
         this->searcharray.push_back(tmp);
     }
-
-
 }
 
 

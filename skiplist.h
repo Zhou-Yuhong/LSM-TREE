@@ -15,7 +15,6 @@ struct Node {
     std::string val;
     Node(Node* right, Node* down, uint64_t key, std::string val) : right(right), down(down), key(key), val(val) {}
     Node() : right(nullptr), down(nullptr) {}
-    bool del=false;
 };
 class Skiplist {
 public:
@@ -28,7 +27,7 @@ public:
         cap=10240+32;
     }
     ~Skiplist();
-    void put(uint64_t key,std::string val,bool if_del=false);
+    void put(uint64_t key,std::string val);
     void showtree();
     std::string* get(const uint64_t & key);
     bool del(const uint64_t & key);

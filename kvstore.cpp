@@ -70,26 +70,28 @@ std::string KVStore::get(uint64_t key)
     Node* target=this->skiplist->fetch(key);
     std::string result;
     //在Skiplist里找到且未被删除
-    if(target!= nullptr&&!target->del){
+    if(target!= nullptr&&(target->val!="~DELETED~")){
         return target->val;
     }
     else{
-        if(target&&target->del){
+        if(target&&target->val=="~DELETED~"){
             //如果被删除了
             return "";
         }
-        //到下层去找
+        //在Skiplist 里没找到，到下层去找
         else{
-            bool if_del=false;
             int level_size=this->file_level.size();
             for(int i=0;i<level_size;i++){
-                result=this->file_level[i]->get(key,if_del);
-                if(result==""&&if_del==false) continue;
+                result=this->file_level[i]->get(key);
+                //如果未找到，则继续
+                if(result=="") continue;
                 else{
-                    if(if_del) return "";
+                    //被删除
+                    if(result=="~DELETED~") return "";
                     else return result;
                 }
             }
+            //全没找到
             return "";
         }
     }
@@ -107,7 +109,7 @@ bool KVStore::del(uint64_t key)
     //如果在skiplist里找到了
     if(this->skiplist->fetch(key)){
         //找到但是已经被删除
-        if(this->skiplist->fetch(key)->del) return false;
+        if(this->skiplist->fetch(key)->val=="~DELETED~") return false;
         //找到且未被删除
         else{
             this->skiplist->del(key);
@@ -116,8 +118,9 @@ bool KVStore::del(uint64_t key)
     }
     //未在skiplist里找到，增加一条键值为key，标记为删除的记录
     else{
-        this->skiplist->put(key,"",true);
+        this->skiplist->put(key,"~DELETED~");
         if(this->skiplist->getcap()>2048*1000) {
+            //暂时都放到14层
             this->file_level[14]->make_sstable(*this->skiplist);
             //reset Skiplist
             skiplist->reset();
