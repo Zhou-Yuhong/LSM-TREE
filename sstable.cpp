@@ -44,14 +44,15 @@ Bloomfilter::~Bloomfilter()
 {
     //delete bitarray;
 }
-//如果未找到返回false,//似乎只需要返回下标就行
+//如果未找到返回false,找到的话，不管删除没删除，都返回true
 bool Sstable::getoffset(uint64_t key, int &index,bool & if_del)
 {
-  //  if (key > this->header.max_key || key < this->header.min_key) return 0;
+    if (key > this->header.max_key || key < this->header.min_key) return false;
     //用bloomfilter判断key是否存在
-    vector<unsigned int>hash_numgroup= gethash(key);
+    //vector<unsigned int>hash_numgroup= gethash(key);
+    gethash(key);
     for(int i=0;i<4;i++){
-        if(!bloomfilter.is_in_bitarray(hash_numgroup[i])) return false;
+        if(!bloomfilter.is_in_bitarray(this->hash_result[i])) return false;
     }
     //用二分法找到对应索引,没有则返回0
     int left=0;
@@ -59,14 +60,9 @@ bool Sstable::getoffset(uint64_t key, int &index,bool & if_del)
     while(left<=right){
         int mid=(left+right)/2;
         if(searcharray[mid].key==key){
-            if(searcharray[mid].del) {
-                if_del=true;
-                return false;//被删除了
-            }
-            else {
+                if_del=searcharray[mid].del;
                 index=mid;
                 return true;
-            };
         }
         else if(searcharray[mid].key<key){
             left=mid+1;
@@ -79,21 +75,27 @@ bool Sstable::getoffset(uint64_t key, int &index,bool & if_del)
     return false;
 }
 
-vector<unsigned int>Sstable::gethash(uint64_t num) {
-    unsigned int hashresult[4] = {0};
+//vector<unsigned int>Sstable::gethash(uint64_t num) {
+//    unsigned int hashresult[4] = {0};
+//    void* key=&num;
+//    MurmurHash3_x64_128(key,8,1,hashresult);
+//    vector<unsigned int> result;
+//    for(int i=0;i<4;i++){
+//        result.push_back(hashresult[i]);
+//    }
+//    return result;
+//}
+    void Sstable::gethash(uint64_t num) {
     void* key=&num;
-    MurmurHash3_x64_128(key,8,1,hashresult);
-    vector<unsigned int> result;
-    for(int i=0;i<4;i++){
-        result.push_back(hashresult[i]);
-    }
-    return result;
+    MurmurHash3_x64_128(key,8,1,this->hash_result);
+
 }
 
 void Sstable::setfilter(uint64_t key) {
-     vector<unsigned int> result= gethash(key);
+     //vector<unsigned int> result= gethash(key);
+      gethash(key);
      for(int i=0;i<4;i++){
-         this->bloomfilter.add_to_bitarray(result[i]);
+         this->bloomfilter.add_to_bitarray(this->hash_result[i]);
      }
      return;
 }
@@ -114,25 +116,30 @@ std::string Sstable::get(uint64_t key,string filename,bool & if_del) {
     //读的大小
     unsigned int size;
     if(this->getoffset(key,index,if_del)){
+        //如果在这个sstable中，key对应的val被删除，则直接返回“ ”
+        if(if_del) return "";
         ifstream in(filename,ios::in|ios::binary);
-        in.seekg(0,ios_base::end);
-        unsigned length=in.tellg();
+        unsigned int offset=this->searcharray[index].offset;
         //如果要读的是最后一个value
         if(index==this->searcharray.size()-1){
-         size=length-this->searcharray[index].offset;
+            in.seekg(0,ios_base::end);
+            unsigned length=in.tellg();
+         size=length-offset;
          char* c=new char[size];
-         in.seekg(this->searcharray[index].offset);
+         in.seekg(offset);
          in.read(c,size);
          std::string result=c;
          delete c;
          return result;
         }
+        //若不是
         else{
-            size=this->searcharray[index+1].offset-this->searcharray[index].offset;
-            char c[100];
-            in.seekg(this->searcharray[index].offset);
-            in.read(c,100);
+            size=this->searcharray[index+1].offset-offset;
+            char* c=new char[size];
+            in.seekg(offset);
+            in.read(c,size);
             std::string result=c;
+            delete c;
             return result;
         }
     }
@@ -158,7 +165,8 @@ Sstable::Sstable(std::string filename) {
     //读入bloom filter
     in.read(this->bloomfilter.bitarray,10240);
     //读入searcharray
-    for(unsigned int i=0;i<(this->header.num);i++){
+    uint64_t totlenum=this->header.num;
+    for(unsigned int i=0;i<totlenum;i++){
         in.read((char *)&numinput, sizeof(uint64_t));
         in.read((char *)&numinput_32, sizeof(uint32_t));
         in.read((char *)&del, sizeof(bool));

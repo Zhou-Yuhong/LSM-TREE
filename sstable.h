@@ -50,12 +50,14 @@ struct Bloomfilter {
 };
 class Sstable {
 public:
+    //存储哈希得到的四个数
+    unsigned int hash_result[4]={0};
     Header header;
     Bloomfilter bloomfilter;
     vector<Searcher> searcharray;
     //将hash得到的128位划分成4个unsigned
-    vector<unsigned int> gethash(uint64_t num);
-
+    //vector<unsigned int> gethash(uint64_t num);
+    void  gethash(uint64_t num);
     //找键值为key的准备工作,第二个参数标明索引下标，第三个参数标明是否删除，通过返回值和if_del区分删除、找到、未找到三种情况
     bool getoffset(uint64_t key,int & index,bool & if_del);
     //返回键值为key的value,未找到返回空的string,第二个参数为打开的文件名，第三个参数标记是否删除

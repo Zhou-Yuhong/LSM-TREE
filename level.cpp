@@ -89,20 +89,27 @@ std::string Level::get(uint64_t key,bool& if_del) {
     }
     std::string filename;
     std::string result;
+    Sstable * sstable;
     //按新旧顺序找
     for(int index=i-1;index>=0;index--){
-        filename="./DATA\\level_"+ to_string(this->level_id)+"\\sstable_"+ to_string(index);
-        result=this->file[index]->get(key,filename,if_del);
-        //如果在一个sst中未查找到且并非被删除，则继续查找
-        if(result==""&&if_del==false) continue;
+        //判断key是否在这个sstable中
+        sstable=file[index];
+        if(key<=sstable->header.max_key&&key>=sstable->header.min_key) {
+            filename = "./DATA\\level_" + to_string(this->level_id) + "\\sstable_" + to_string(index);
+            result = this->file[index]->get(key, filename, if_del);
+            //如果在一个sst中未查找到且并非被删除，则继续查找
+            if (result == "" && if_del == false) continue;
+            else {
+                //如果是被删除的，则返回空
+                if (if_del) return "";
+                    //否则，查找到结果，返回结果
+                else return result;
+            }
+        }
         else{
-            //如果是被删除的，则返回空
-            if(if_del) return "";
-            //否则，查找到结果，返回结果
-            else return result;
+            continue;
         }
     }
-
 }
 
 void Level::add_sstable(Sstable *sstable) {

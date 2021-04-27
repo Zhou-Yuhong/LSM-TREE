@@ -32,11 +32,8 @@ private:
 		phase();
 
 		// Test after all insertions
-		for (i = 0; i < max; ++i)
-		    if(i==max-1){
-		        int m=0;
-		    }
-			EXPECT(std::string(i+1, 's'), store.get(i));
+		for (i = 0; i < max; ++i){
+			EXPECT(std::string(i+1, 's'), store.get(i));}
 		phase();
 
 		// Test deletions

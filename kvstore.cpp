@@ -81,7 +81,8 @@ std::string KVStore::get(uint64_t key)
         //到下层去找
         else{
             bool if_del=false;
-            for(int i=0;i<this->file_level.size();i++){
+            int level_size=this->file_level.size();
+            for(int i=0;i<level_size;i++){
                 result=this->file_level[i]->get(key,if_del);
                 if(result==""&&if_del==false) continue;
                 else{
