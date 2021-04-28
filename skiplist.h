@@ -35,8 +35,6 @@ public:
     void reset();
     //返回键值为key的左上结点，不论是否delete
     Node* fetch(const uint64_t & key);
-    //生成Sstable,同时在硬盘也做对应操作
-    Sstable* translate();
 };
 
 

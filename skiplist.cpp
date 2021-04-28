@@ -3,10 +3,7 @@
 //
 
 #include "skiplist.h"
-#include <fstream>
-#include <direct.h>
-#include <iostream>
-#include <io.h>
+//#include <iostream>
 using namespace std;
 void Skiplist::put( uint64_t key,  std::string val)
 {   //已经存在该key的情况
@@ -138,77 +135,6 @@ Node* Skiplist::fetch(const uint64_t & key)
     return nullptr;
 }
 
-Sstable *Skiplist::translate() {
-    Node* p=head;
-    while(p->down) p=p->down;
-    p=p->right;
-    //创建一个Sstable
-    Sstable* sstable=new Sstable();
-    //创建一个Vector保存所有的value
-    vector<string> valueset;
-    while(p){
-        //sstable插入key
-         sstable->addkey(p->key);
-         //先把value放在vector里
-         valueset.push_back(p->val);
-         p=p->right;
-    }
-    //创建文件
-    if(access("data",0)!=0){
-        mkdir("data");
-    }
-    if(access("data\\0",0)!=0){
-        mkdir("data\\0");
-    }
-    string filename="data\\0\\test.sst";
-    ofstream out(filename,ios::out|ios::binary);
-    //起始偏移量
-    unsigned int origin_offset=32+10240+sstable->header.num*96;
-    //写头部
-    out.write((char *)&(sstable->header.time), sizeof(uint64_t));
-    out.write((char *)&(sstable->header.num),sizeof (uint64_t));
-    out.write((char *)&(sstable->header.min_key),sizeof (uint64_t));
-    out.write((char *)&(sstable->header.max_key),sizeof (uint64_t));
-    //写bloomfilter
-    out.write((char*)&(sstable->bloomfilter),sizeof(char)*10240);
-
-    for(int i=0;i<sstable->header.num;i++){
-        //写索引
-        out.write((char*)&(sstable->searcharray[i].key),sizeof(uint64_t));
-        out.write((char*)&(sstable->searcharray[i].offset),sizeof (uint32_t));
-    }
-    //用于记录所有偏移量
-    vector<unsigned int> offset_array;
-    //循环中存储偏移量
-    unsigned int pos;
-    //unsigned int size;
-    //存储value，并保存偏移量
-    for(int i=0;i<sstable->header.num;i++){
-       pos=out.tellp();
-       //记录所有偏移量
-       offset_array.push_back(pos);
-       //把string转成char*来存
-       const char* input=valueset[i].c_str();
-       //这里size多留一个位置用于存字符串结束符
-       out.write(input,valueset[i].size());
-    }
-    //测试
-//    out.close();
-//    ifstream in(filename,ios::in|ios::binary);
-//    in.seekg(offset_array[0]);  //第一处字符串
-//    char a[100];
-//    in.read(a,100);
-//    in.close();
-    //在索引区写回偏移量,内存和硬盘都要写
-    pos=32+10240+8;
-    for(int i=0;i<sstable->header.num;i++){
-        sstable->searcharray[i].offset=offset_array[i];
-        out.seekp(pos);
-        out.write((char*)&(offset_array[i]),sizeof(unsigned int));
-        pos+=12;
-    }
-    return sstable;
-}
 
 //void Skiplist::showtree() {
 //    Node* p=head;

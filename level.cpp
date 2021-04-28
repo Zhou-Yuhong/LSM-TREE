@@ -3,7 +3,7 @@
 //
 
 #include "level.h"
-#include "io.h"
+#include "utils.h"
 #include <fstream>
 void Level::make_sstable(Skiplist &skiplist) {
     //先在内存中生成一个sstable
@@ -22,13 +22,13 @@ void Level::make_sstable(Skiplist &skiplist) {
         p=p->right;
     }
     //创建文件
-    if(access("./DATA",0)!=0){
-        mkdir("./DATA");
+    if(!utils::dirExists("./DATA")){
+        utils::_mkdir("./DATA");
     }
     std::string filename="./DATA\\level_" + to_string(this->level_id);
     const char* tmp=filename.c_str();
-    if(access(tmp,0)!=0){
-        mkdir(tmp);
+    if(!utils::dirExists(tmp)){
+       utils::_mkdir(tmp);
     }
     int i=0;
     while(this->is_create[i]){

@@ -27,7 +27,7 @@ private:
 
 public:
     //由path取出所有的.sst文件
-    void getFiles( string path, vector<string>& files );
+    //void getFiles( string path, vector<string>& files );
     KVStore(const std::string &dir);
     //不带参数的kvstore
     //KVStore();

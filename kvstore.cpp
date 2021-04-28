@@ -7,6 +7,7 @@
 #include <cwchar>
 #include <io.h>
 #include <cstring>
+#include "utils.h"
 //#include <iostream>
 KVStore::KVStore(const std::string &dir): KVStoreAPI(dir)
 {
@@ -16,19 +17,30 @@ KVStore::KVStore(const std::string &dir): KVStoreAPI(dir)
         this->file_level.push_back(level);
     }
     //从dir中读出所有sstable文件
-    std::vector<string> files;
-    this->getFiles(dir,files);
+    std::vector<string> first_level_files;
+    std::string first_filename;
+    utils::scanDir(dir,first_level_files);
+    std::vector<string> second_level_files;
+    std::vector<string> fullname_files;
+    for(int i=0;i<first_level_files.size();i++){
+        first_filename=first_level_files[i];
+        utils::scanDir(dir+"\\"+first_filename,second_level_files);
+        for(int j=0;j<second_level_files.size();j++) {
+            fullname_files.push_back(dir+"\\" + first_filename + "\\" + second_level_files[j]);
+        }
+        second_level_files.clear();
+    }
     //存储从string中得到的信息
     vector<int> numset;
-    for(int i=0;i<files.size();i++){
+    for(int i=0;i<fullname_files.size();i++){
         //如果读出的level超出内存中的level层数，加层
 //        sstable_num= files[i][files[i].length()-1]-'0';
-        numset=this->GetStringNum(files[i]);
+        numset=this->GetStringNum(fullname_files[i]);
         if((numset[0]+1)>=this->file_level.size()){
             this->addlevel(numset[0]+1);
         }
         //初始化,加入新的sstable
-        Sstable *sstable=new Sstable(files[i]);
+        Sstable *sstable=new Sstable(fullname_files[i]);
         this->file_level[numset[0]]->add_sstable(sstable,numset[1]);
     }
 
@@ -142,33 +154,7 @@ void KVStore::reset()
 {
 }
 
-void KVStore::getFiles(string path, vector<string> &files) {
-    //文件句柄
-    long   hFile   =   0;
-    //文件信息
-    struct _finddata_t fileinfo;
-    string p;
-    if((hFile = _findfirst(p.assign(path).append("\\*").c_str(),&fileinfo)) !=  -1)
-    {
-        do
-        {
-            //如果是目录,迭代之
-            //如果不是,加入列表
-            if((fileinfo.attrib &  _A_SUBDIR))
-            {
-                if(strcmp(fileinfo.name,".") != 0  &&  strcmp(fileinfo.name,"..") != 0) {
-                    getFiles(p.assign(path).append("\\").append(fileinfo.name), files);
-                }
-            }
-            else
-            {
-                files.push_back(p.assign(path).append("\\").append(fileinfo.name));
-            }
-        }while(_findnext(hFile, &fileinfo)  == 0);
-        _findclose(hFile);
-    }
 
-}
 //把level的层数增加到newsize
 void KVStore::addlevel(int newsize) {
     int oldsize=this->file_level.size();
