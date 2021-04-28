@@ -109,13 +109,10 @@ std::string Level::get(uint64_t key) {
     }
 }
 
-void Level::add_sstable(Sstable *sstable) {
-    int i=0;
-    while(this->is_create[i]){
-        i++;
-    }
-    this->file[i]=sstable;
-    this->is_create[i]=true;
+void Level::add_sstable(Sstable *sstable,int index) {
+
+    this->file[index]=sstable;
+    this->is_create[index]=true;
 }
 
 bool Level::if_full() {

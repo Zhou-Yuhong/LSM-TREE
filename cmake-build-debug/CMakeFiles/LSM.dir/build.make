@@ -75,18 +75,18 @@ include CMakeFiles/LSM.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/LSM.dir/flags.make
 
-CMakeFiles/LSM.dir/correctness.cc.obj: CMakeFiles/LSM.dir/flags.make
-CMakeFiles/LSM.dir/correctness.cc.obj: ../correctness.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=D:\Clion\LSM\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/LSM.dir/correctness.cc.obj"
-	C:\MinGW\bin\mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\LSM.dir\correctness.cc.obj -c D:\Clion\LSM\correctness.cc
+CMakeFiles/LSM.dir/persistence.cc.obj: CMakeFiles/LSM.dir/flags.make
+CMakeFiles/LSM.dir/persistence.cc.obj: ../persistence.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=D:\Clion\LSM\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/LSM.dir/persistence.cc.obj"
+	C:\MinGW\bin\mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles\LSM.dir\persistence.cc.obj -c D:\Clion\LSM\persistence.cc
 
-CMakeFiles/LSM.dir/correctness.cc.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/LSM.dir/correctness.cc.i"
-	C:\MinGW\bin\mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E D:\Clion\LSM\correctness.cc > CMakeFiles\LSM.dir\correctness.cc.i
+CMakeFiles/LSM.dir/persistence.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/LSM.dir/persistence.cc.i"
+	C:\MinGW\bin\mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E D:\Clion\LSM\persistence.cc > CMakeFiles\LSM.dir\persistence.cc.i
 
-CMakeFiles/LSM.dir/correctness.cc.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LSM.dir/correctness.cc.s"
-	C:\MinGW\bin\mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S D:\Clion\LSM\correctness.cc -o CMakeFiles\LSM.dir\correctness.cc.s
+CMakeFiles/LSM.dir/persistence.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/LSM.dir/persistence.cc.s"
+	C:\MinGW\bin\mingw32-g++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S D:\Clion\LSM\persistence.cc -o CMakeFiles\LSM.dir\persistence.cc.s
 
 CMakeFiles/LSM.dir/kvstore.cpp.obj: CMakeFiles/LSM.dir/flags.make
 CMakeFiles/LSM.dir/kvstore.cpp.obj: ../kvstore.cpp
@@ -142,7 +142,7 @@ CMakeFiles/LSM.dir/sstable.cpp.s: cmake_force
 
 # Object files for target LSM
 LSM_OBJECTS = \
-"CMakeFiles/LSM.dir/correctness.cc.obj" \
+"CMakeFiles/LSM.dir/persistence.cc.obj" \
 "CMakeFiles/LSM.dir/kvstore.cpp.obj" \
 "CMakeFiles/LSM.dir/level.cpp.obj" \
 "CMakeFiles/LSM.dir/skiplist.cpp.obj" \
@@ -151,7 +151,7 @@ LSM_OBJECTS = \
 # External object files for target LSM
 LSM_EXTERNAL_OBJECTS =
 
-LSM.exe: CMakeFiles/LSM.dir/correctness.cc.obj
+LSM.exe: CMakeFiles/LSM.dir/persistence.cc.obj
 LSM.exe: CMakeFiles/LSM.dir/kvstore.cpp.obj
 LSM.exe: CMakeFiles/LSM.dir/level.cpp.obj
 LSM.exe: CMakeFiles/LSM.dir/skiplist.cpp.obj

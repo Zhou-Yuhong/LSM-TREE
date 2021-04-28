@@ -30,11 +30,13 @@ public:
             }
         }
     }
-    void add_sstable(Sstable * sstable);
+    //在指定位置添加Sstable*
+    void add_sstable(Sstable * sstable,int index);
     //判断一层是否满了
     bool if_full();
     //找到最新的value
     std::string get(uint64_t key);
+
 };
 
 

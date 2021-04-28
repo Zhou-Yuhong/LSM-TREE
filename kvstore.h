@@ -9,6 +9,7 @@
 
 #include "kvstore_api.h"
 #include "level.h"
+#include <list>
 //存储sst文件的层次以及路径信息
 struct  sstable_path{
     int level;
@@ -26,7 +27,7 @@ private:
 
 public:
     //由path取出所有的.sst文件
-    void getFiles( string path, vector<sstable_path>& files );
+    void getFiles( string path, vector<string>& files );
     KVStore(const std::string &dir);
     //不带参数的kvstore
     //KVStore();
@@ -41,6 +42,8 @@ public:
     void reset() override;
     //扩容level
     void addlevel(int newsize);
+    //得到string中的所有数字
+    vector<int> GetStringNum(string);
 };
 
 

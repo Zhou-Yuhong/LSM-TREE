@@ -16,7 +16,8 @@ file(GLOB SOURCES
         level.h
         utils.h
         test.h
-        correctness.cc
+ #       correctness.cc
+        persistence.cc
 )
 
-add_executable(LSM correctness.cc ${SOURCE_FILES}${SOURCES})
+add_executable(LSM persistence.cc ${SOURCE_FILES}${SOURCES})

@@ -16,17 +16,22 @@ KVStore::KVStore(const std::string &dir): KVStoreAPI(dir)
         this->file_level.push_back(level);
     }
     //从dir中读出所有sstable文件
-    std::vector<sstable_path> files;
+    std::vector<string> files;
     this->getFiles(dir,files);
+    //存储从string中得到的信息
+    vector<int> numset;
     for(int i=0;i<files.size();i++){
         //如果读出的level超出内存中的level层数，加层
-        if((files[i].level+1)>=this->file_level.size()){
-            this->addlevel(files[i].level+1);
+//        sstable_num= files[i][files[i].length()-1]-'0';
+        numset=this->GetStringNum(files[i]);
+        if((numset[0]+1)>=this->file_level.size()){
+            this->addlevel(numset[0]+1);
         }
         //初始化,加入新的sstable
-        Sstable *sstable=new Sstable(files[i].path);
-        this->file_level[files[i].level]->add_sstable(sstable);
+        Sstable *sstable=new Sstable(files[i]);
+        this->file_level[numset[0]]->add_sstable(sstable,numset[1]);
     }
+
     //初始化跳表
     this->skiplist=new Skiplist();
 }
@@ -137,8 +142,7 @@ void KVStore::reset()
 {
 }
 
-void KVStore::getFiles(string path, vector<sstable_path> &files) {
-    static int level=-1;
+void KVStore::getFiles(string path, vector<string> &files) {
     //文件句柄
     long   hFile   =   0;
     //文件信息
@@ -153,14 +157,12 @@ void KVStore::getFiles(string path, vector<sstable_path> &files) {
             if((fileinfo.attrib &  _A_SUBDIR))
             {
                 if(strcmp(fileinfo.name,".") != 0  &&  strcmp(fileinfo.name,"..") != 0) {
-                    level++;
                     getFiles(p.assign(path).append("\\").append(fileinfo.name), files);
                 }
             }
             else
             {
-                sstable_path tmp(level,p.assign(path).append("\\").append(fileinfo.name) );
-                files.push_back(tmp);
+                files.push_back(p.assign(path).append("\\").append(fileinfo.name));
             }
         }while(_findnext(hFile, &fileinfo)  == 0);
         _findclose(hFile);
@@ -174,6 +176,60 @@ void KVStore::addlevel(int newsize) {
         Level *level=new Level(i);
         this->file_level.push_back(level);
     }
+}
+
+vector<int> KVStore::GetStringNum(string str) {
+
+        static char numarr[] = {'0','1','2','3','4','5','6','7','8','9',};
+        vector<int> numlist;
+        int startIndex = 0;
+
+        while (startIndex != -1)
+        {
+            vector<char> tempnum;
+
+            startIndex = -1;
+
+            for (size_t i = 0; i < str.length(); i++)
+            {
+                for (size_t j = 0; j < (sizeof(numarr) / sizeof(numarr[0])); j++)
+                {
+                    if (str[i] == numarr[j])
+                    {
+                        startIndex = i;
+                        break;
+                    }
+                }
+
+                if (startIndex != -1)
+                {
+                    tempnum.push_back(str[startIndex]);
+                    int tempindex = 0;
+
+                    //向下查找数据
+                    char tempchar = str[startIndex + (tempindex += 1)];
+
+                    //表示为数字
+                    while (int(tempchar - 48) >= 0 && int(tempchar - 48) <= 9)
+                    {
+                        tempnum.push_back(tempchar);
+                        tempchar = str[startIndex + (tempindex += 1)];
+                    }
+
+                    //删除查询到的数据
+                    str.erase(startIndex, tempindex);
+                    break;
+                }
+            }
+
+            if (!tempnum.empty()) {
+                //cout << "tempnum : " << string(tempnum.begin(), tempnum.end()) << endl;
+                numlist.push_back(stoi(string(tempnum.begin(), tempnum.end())));
+            }
+        }
+
+        return numlist;
+
 }
 
 //KVStore::KVStore() {
