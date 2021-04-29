@@ -16,7 +16,7 @@ file(GLOB SOURCES
         level.h
         utils.h
         test.h
- #       correctness.cc
+      #  correctness.cc
         persistence.cc
 )
 

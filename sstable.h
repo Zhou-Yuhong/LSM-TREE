@@ -11,6 +11,9 @@
 #include<vector>
 #include <string>
 static unsigned int time=1;//时间戳
+static void settime(int time_read){
+    if(time_read>time) time=time_read;
+}
 using namespace std;
 struct Header
 {

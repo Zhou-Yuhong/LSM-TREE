@@ -41,6 +41,8 @@ KVStore::KVStore(const std::string &dir): KVStoreAPI(dir)
         }
         //初始化,加入新的sstable
         Sstable *sstable=new Sstable(fullname_files[i]);
+        //设置时间
+        settime(sstable->header.time);
         this->file_level[numset[0]]->add_sstable(sstable,numset[1]);
     }
 
