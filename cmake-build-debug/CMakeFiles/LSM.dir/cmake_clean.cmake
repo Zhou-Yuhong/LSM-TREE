@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/LSM.dir/correctness.cc.obj"
   "CMakeFiles/LSM.dir/kvstore.cpp.obj"
   "CMakeFiles/LSM.dir/level.cpp.obj"
-  "CMakeFiles/LSM.dir/persistence.cc.obj"
   "CMakeFiles/LSM.dir/skiplist.cpp.obj"
   "CMakeFiles/LSM.dir/sstable.cpp.obj"
   "LSM.exe"

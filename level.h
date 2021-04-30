@@ -18,13 +18,23 @@ struct Sstable_Wrap{
     ~Sstable_Wrap(){
         delete sstable;
     }
+    void getRange(uint64_t & minkey,uint64_t &maxkey){
+        minkey=this->sstable->header.min_key;
+        maxkey=this->sstable->header.max_key;
+    };
+    uint64_t getminkey(){
+        return this->sstable->header.min_key;
+    };
+    uint64_t getmaxkey(){
+        return this->sstable->header.max_key;
+    };
 };
 class Level{
 public:
     int level_id;
-    //.sst文件后缀,新建的时候用
+    //.sst文件后缀,新建的时候用,防止重名
     int sstable_id=0;
-    int cap=0; //level中存储了多少sstable
+    //int cap=0; //level中存储了多少sstable
     bool *is_create;
     vector<Sstable_Wrap*> file;
     Level(int id){
@@ -51,7 +61,19 @@ public:
     bool if_full();
     //找到最新的value
     std::string get(uint64_t key);
-
+    //找到这层的range
+    void GetLevelRange(uint64_t &minkey,uint64_t& maxkey);
+    //由多路vector<com_node*> 归并后加入该层，返回要加入下层的vector<com_node*>
+    vector<vector<comp_node*>> merge(vector<vector<comp_node*>>);
+    //多路归并，递归实现
+    vector<comp_node*> kMergeSort(vector<vector<comp_node*>>,int start,int end);
+    //两路归并
+    vector<comp_node*> mergeTwoArrays(vector<comp_node*>A,vector<comp_node*> B);
+    //由vector<comp_node*> 生成vector<Sstable_wrap*>,并要求在文件中写
+    //把vector<comp_node*>转成 vector<Sstable_Wrap *>，并在文件中写
+    vector<Sstable_Wrap *> translate(vector<comp_node*> A);
+    //把一个Sstable_wrap* 转成vector<comp_node*>
+    vector<comp_node *> translate(Sstable_Wrap * sstableWrap);
 };
 
 

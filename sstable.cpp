@@ -119,7 +119,7 @@ std::string Sstable::get(uint64_t key,string filename) {
         //如果要读的是最后一个value
         if(index==this->searcharray.size()-1){
             in.seekg(0,ios_base::end);
-            unsigned length=in.tellg();
+            unsigned int length=in.tellg();
          size=length-offset;
          char* c=new char[size+1];
          c[size]='\0';
@@ -170,6 +170,70 @@ Sstable::Sstable(std::string filename) {
         Searcher tmp=Searcher(numinput,numinput_32);
         this->searcharray.push_back(tmp);
     }
+}
+//取得所有存储的key、value,存在vector里返回
+vector<comp_node *> Sstable::get_all_node(string filename) {
+    ifstream in(filename,ios::in|ios::binary);
+    uint64_t time;
+    uint64_t num;
+    unsigned int size;
+    //暂时存读出来的64位和32位数字
+    uint64_t num_64;
+    uint32_t num_32;
+    //读头部的时间以及总数
+    in.read((char *)&time,sizeof(uint64_t));
+    in.read((char *)&num,sizeof (uint64_t));
+    //存储所有的key
+    vector<uint64_t> keyGroup;
+    //存储所有的offset
+    vector<uint32_t> offsetGroup;
+    //存储所有的value
+    vector<string> valGroup;
+    //开始读key
+    in.seekg(10240+32);
+    //先填满 keyGroup和offsetGroup
+    for(uint64_t i=0;i<num;i++){
+        in.read((char*)&num_64,sizeof (uint64_t));
+        in.read((char*)&num_32,sizeof (uint32_t));
+        keyGroup.push_back(num_64);
+        offsetGroup.push_back(num_32);
+    }
+    //填满valGroup
+    for(uint64_t i=0;i<num;i++){
+        //如果要读的是最后一个val
+        if(i==num-1){
+            in.seekg(0,ios_base::end);
+            unsigned int length=in.tellg();
+            size=length-offsetGroup[i];
+            char* c=new char[size+1];
+            c[size]='\0';
+            in.seekg(offsetGroup[i]);
+            in.read(c,size);
+            string str=c;
+            delete c;
+            valGroup.push_back(str);
+            continue;
+        }
+        //如果要读的不是最后一个
+        else{
+           size=offsetGroup[i+1]-offsetGroup[i];
+           char *c=new char[size+1];
+           c[size]='\0';
+           in.seekg(offsetGroup[i]);
+           in.read(c,size);
+           string str=c;
+           delete c;
+           valGroup.push_back(str);
+            continue;
+        }
+    }
+    in.close();
+    //由time、key和offset生成comp_node
+    vector<comp_node *> comp_nodeGroup;
+    for(uint64_t i=0;i<num;i++){
+        comp_nodeGroup.push_back(new comp_node(keyGroup[i],valGroup[i],time));
+    }
+    return comp_nodeGroup;
 }
 
 

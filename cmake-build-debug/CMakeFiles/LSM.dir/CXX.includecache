@@ -6,19 +6,15 @@
 
 #IncludeRegexTransform: 
 
-D:/Clion/LSM/kvstore.cpp
-kvstore.h
-D:/Clion/LSM/kvstore.h
+D:/Clion/LSM/correctness.cc
+iostream
+-
+cstdint
+-
 string
 -
-cwchar
--
-io.h
--
-cstring
--
-utils.h
-D:/Clion/LSM/utils.h
+test.h
+D:/Clion/LSM/test.h
 
 D:/Clion/LSM/kvstore.h
 kvstore_api.h
@@ -47,18 +43,6 @@ skiplist.h
 D:/Clion/LSM/skiplist.h
 sstable.h
 D:/Clion/LSM/sstable.h
-
-D:/Clion/LSM/persistence.cc
-iostream
--
-cstdint
--
-string
--
-cassert
--
-test.h
-D:/Clion/LSM/test.h
 
 D:/Clion/LSM/skiplist.h
 sstable.h

@@ -10,11 +10,24 @@
 #include <stdint.h>
 #include<vector>
 #include <string>
+//注意读入时要把时间戳改成最大的加一
 static unsigned int time=1;//时间戳
 static void settime(int time_read){
     if(time_read>time) time=time_read;
 }
 using namespace std;
+//归并时用的结点
+struct comp_node{
+    //存储key、value和建立的时间
+    uint64_t key;
+    string val;
+    unsigned int time;
+    comp_node(uint64_t key,string val,unsigned int time){
+        this->key=key;
+        this->val=val;
+        this->time=time;
+    }
+};
 struct Header
 {
     uint64_t time=0;
@@ -67,7 +80,8 @@ public:
 
     //生成Sstable的辅助函数，对应的value先暂时放在skiplist的内存中，有两者下标的对应关系
     void addkey(uint64_t key);
-
+    //取得所有信息，参数为文件路径
+    vector<comp_node*> get_all_node(string filename);
     Sstable(){
         this->header.time=time;
         time++;

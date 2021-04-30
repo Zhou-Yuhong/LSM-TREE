@@ -220,6 +220,92 @@ vector<int> KVStore::GetStringNum(string str) {
 
 }
 
+void KVStore::Compa_level0() {
+    uint64_t min_key=0;
+    uint64_t max_key=0;
+    //得到第一层的key范围
+    this->file_level[0]->GetLevelRange(min_key,max_key);
+    //存储第一层键值有交叉的sstsble下标
+    vector<int> indexSet;
+    //临时存储sstable的minkey和maxkey
+    uint64_t sstable_min=0;
+    uint64_t sstable_max=0;
+    Level* level1=this->file_level[1];
+    int i=0;
+    //搜寻所有键值有交集的sstable
+    while(level1->is_create[i]){
+        sstable_min=level1->file[i]->getminkey();
+        sstable_max=level1->file[i]->getmaxkey();
+        if(if_cross(sstable_min,sstable_max,min_key,max_key)){
+            indexSet.push_back(i);
+        }
+        i++;
+    }
+    //存储所有要归并的sstable中的value
+    vector<vector<comp_node*>>  wayGroup;
+    //先把level0中的路放进去
+    i=0;
+    string filename;
+    while(this->file_level[0]->is_create[i]){
+        //取文件
+        filename = "./DATA\\level_" + to_string(0) + "\\sstable_" + to_string(this->file_level[0]->file[i]->seq_num);
+        vector<comp_node*> waytmp=this->file_level[0]->file[i]->sstable->get_all_node(filename);
+        wayGroup.push_back(waytmp);
+        //删除文件夹中的文件,把内存中的is_create和file清空
+        this->file_level[0]->is_create[i]=false;
+        delete this->file_level[0]->file[i];
+        this->file_level[0]->file[i]= nullptr;
+        utils::rmfile(filename.c_str());
+        i++;
+    }
+    //把level0中的sst起始下标置0
+    this->file_level[0]->sstable_id=0;
+    //把level1中的放进去,前提是indexSet非空
+    if(!indexSet.empty()) {
+        for (i = 0; i < indexSet.size(); i++) {
+            //取走同时把,is_create设空，file设空
+            filename = "./DATA\\level_" + to_string(1) + "\\sstable_" + to_string(level1->file[indexSet[i]]->seq_num);
+            vector<comp_node *> waytmp = level1->file[indexSet[i]]->sstable->get_all_node(filename);
+            wayGroup.push_back(waytmp);
+            //删除文件夹中的文件，把内存中的is_create和file清空
+            level1->is_create[indexSet[i]] = false;
+            delete level1->file[indexSet[i]];
+            level1->file[indexSet[i]] = nullptr;
+            utils::rmfile(filename.c_str());
+            continue;
+        }
+        //其余sstable_wrap*往前移动,先取得第一个要移动的下标
+        i=indexSet[indexSet.size()-1]+1;
+        while(level1->is_create[i]){
+            //移动
+            level1->is_create[i-indexSet.size()]=true;
+            level1->file[i-indexSet.size()]=level1->file[i];
+            //清空i位置
+            level1->is_create[i]= false;
+            level1->file[i]= nullptr;
+            i++;
+        }
+    }
+    vector<vector<comp_node*>> next_wayGroup;
+    //进行归并以及写入
+    for(int i=0;i<this->file_level.size();i++){
+        next_wayGroup=this->file_level[i]->merge(wayGroup);
+        if(next_wayGroup.empty()) break;
+        wayGroup=next_wayGroup;
+    }
+    //仍有多余未合并但是层数已经满
+    addlevel(this->file_level.size()+1);
+    //写入新层
+    this->file_level[this->file_level.size()-1]->merge(wayGroup);
+}
+
+bool KVStore::if_cross(int min1,int max1,int min2,int max2) {
+    int distance= (max2-min1)>0 ? max2-min1:max1-min2;
+    int length=max1-min1+max2-min2;
+    if(distance>length) return false;
+    else return true;
+}
+
 //KVStore::KVStore() {
 //    //先创建10个level
 //    for(int i=0;i<10;i++){

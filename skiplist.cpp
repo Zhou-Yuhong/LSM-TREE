@@ -42,7 +42,7 @@ void Skiplist::put( uint64_t key,  std::string val)
         head->down = oldHead;
     }
     //增加一个新的元素后cap的增加量
-    this->cap+=(12+val.length()+1);
+    this->cap+=(12+val.length());
 }
 
 std::string* Skiplist::get(const uint64_t & key)

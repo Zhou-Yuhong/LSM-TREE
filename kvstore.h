@@ -19,6 +19,7 @@ struct  sstable_path{
         this->path=path;
     }
 };
+
 class KVStore : public KVStoreAPI {
     // You can add your implementation here
 private:
@@ -44,6 +45,10 @@ public:
     void addlevel(int newsize);
     //得到string中的所有数字
     vector<int> GetStringNum(string);
+    //从level0层开始的合并
+    void Compa_level0();
+    //判断两个范围是否相交
+    bool if_cross(int min1,int max1,int min2,int max2);
 };
 
 
