@@ -72,9 +72,9 @@ public:
     //由多路vector<com_node*> 归并后加入该层，返回要加入下层的vector<com_node*>
     vector<vector<comp_node*>> merge(vector<vector<comp_node*>>);
     //多路归并，递归实现
-    vector<comp_node*> kMergeSort(vector<vector<comp_node*>>,int start,int end);
+    vector<comp_node*> kMergeSort(vector<vector<comp_node*>>&,int start,int end);
     //两路归并
-    vector<comp_node*> mergeTwoArrays(vector<comp_node*>A,vector<comp_node*> B);
+    vector<comp_node*> mergeTwoArrays(vector<comp_node*>&A,vector<comp_node*> &B);
     //把vector<comp_node*>转成 vector<Sstable_Wrap *>，并在文件中写
     vector<Sstable_Wrap *> translate(vector<comp_node*> A);
     //把一个Sstable_wrap* 转成vector<comp_node*>

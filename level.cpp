@@ -273,7 +273,7 @@ vector<vector<comp_node *>> Level::merge(vector<vector<comp_node *>> A) {
     return result;
 }
 //k路归并
-vector<comp_node *> Level::kMergeSort(vector<vector<comp_node *>> A, int start, int end) {
+vector<comp_node *> Level::kMergeSort(vector<vector<comp_node *>> &A, int start, int end) {
     if(start >=end){
         return A[start];
     }
@@ -283,7 +283,7 @@ vector<comp_node *> Level::kMergeSort(vector<vector<comp_node *>> A, int start, 
     return mergeTwoArrays(Left,Right);
 }
 //二路归并
-vector<comp_node *> Level::mergeTwoArrays(vector<comp_node *>A,vector<comp_node *>B) {
+vector<comp_node *> Level::mergeTwoArrays(vector<comp_node *>&A,vector<comp_node *>&B) {
     vector<comp_node *> temp;
     int i = 0, j = 0;
     while (i < A.size() && j < B.size()) {
@@ -298,10 +298,12 @@ vector<comp_node *> Level::mergeTwoArrays(vector<comp_node *>A,vector<comp_node 
         if (A[i]->key == B[j]->key) {
             if (A[i]->time > B[j]->time) {
                 temp.push_back(A[i++]);
+                delete B[j];
                 j++;
                 continue;
             } else {
                 temp.push_back(B[j++]);
+                delete A[i];
                 i++;
                 continue;
             }
