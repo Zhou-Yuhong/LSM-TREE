@@ -10,10 +10,11 @@
 #include <stdint.h>
 #include<vector>
 #include <string>
+//#include "LeakDetector.h"
 //注意读入时要把时间戳改成最大的加一
-static unsigned int time=1;//时间戳
+static unsigned int Time=1;//时间戳
 static void settime(int time_read){
-    if(time_read>time) time=time_read;
+    if(time_read>Time) Time=time_read;
 }
 using namespace std;
 //归并时用的结点
@@ -22,7 +23,7 @@ struct comp_node{
     uint64_t key;
     string val;
     unsigned int time;
-    comp_node(uint64_t key,string val,unsigned int time){
+    comp_node(uint64_t key, string val,unsigned int time){
         this->key=key;
         this->val=val;
         this->time=time;
@@ -63,28 +64,31 @@ struct Bloomfilter {
 };
 class Sstable {
 public:
-    //存储哈希得到的四个数
+    //哈希val得到的四个数
     unsigned int hash_result[4]={0};
+    //头部
     Header header;
+    //布隆过滤器
     Bloomfilter bloomfilter;
     vector<Searcher> searcharray;
     //将hash得到的128位划分成4个unsigned
     //vector<unsigned int> gethash(uint64_t num);
     void  gethash(uint64_t num);
-    //找键值为key的准备工作,第二个参数标明索引下标，第三个参数标明是否删除，通过返回值和if_del区分删除、找到、未找到三种情况
+    //找键值为key的准备工作,第二个参数标明索引下标，通过返回值和if_del区分删除、找到、未找到三种情况
     bool getoffset(uint64_t key,int & index);
-    //返回键值为key的value,未找到返回空的string,第二个参数为打开的文件名，第三个参数标记是否删除
+    //返回键值为key的value,未找到返回空的string,第二个参数为打开的文件名
     std::string get(uint64_t key,string filename);
     //设置bloom filter的位
     void setfilter(uint64_t key);
 
     //生成Sstable的辅助函数，对应的value先暂时放在skiplist的内存中，有两者下标的对应关系
     void addkey(uint64_t key);
-    //取得所有信息，参数为文件路径
+    //取得所有信息，参数为文件路径,用于归并时用
     vector<comp_node*> get_all_node(string filename);
     Sstable(){
-        this->header.time=time;
-        time++;
+        this->header.time=Time;
+        //生成sstable的时候，time自动++
+        Time++;
     }
     //从.sst文件初始化一个Sstable
     Sstable(std::string filename);

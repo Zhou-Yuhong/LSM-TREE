@@ -11,11 +11,11 @@
 //#include <iostream>
 KVStore::KVStore(const std::string &dir): KVStoreAPI(dir)
 {
-    //先创建15个level
-    for(int i=0;i<15;i++){
-        Level* level=new Level(i);
+    //先创建1个level
+        Level* level=new Level(0);
         this->file_level.push_back(level);
-    }
+        //加
+        this->addlevel(2);
     //从dir中读出所有sstable文件
     std::vector<string> first_level_files;
     std::string first_filename;
@@ -70,15 +70,24 @@ void KVStore::put(uint64_t key, const std::string &s)
 //    if(this->skiplist->getcap()==1673608){
 //        std::cout<<"stop here";
 //    }
-    if(this->skiplist->getcap()>2048*1000) {
-        this->file_level[14]->make_sstable(*this->skiplist);
-        //reset Skiplist
-        skiplist->reset();
-    }
 
-    //this->skiplist->reset();
+//
+//    if(this->skiplist->getcap()>2048*1000) {
+//        this->addlevel(15);
+//        this->file_level[14]->make_sstable(*this->skiplist);
+//        //reset Skiplist
+//        skiplist->reset();
+//    }
+     //满了的话加入第一层
+     if(this->skiplist->getcap()>2048*1000){
+         this->file_level[0]->make_sstable(*this->skiplist);
+         //reset Skiplist
+         skiplist->reset();
+     }
     //如果第一层满了，进行合并操作
-
+    if(this->file_level[0]->if_full()){
+        this->Compa_level0();
+    }
 }
 /**
  * Returns the (string) value of the given key.
@@ -161,6 +170,15 @@ void KVStore::reset()
 void KVStore::addlevel(int newsize) {
     int oldsize=this->file_level.size();
     for(int i=oldsize;i<newsize;i++){
+        //创建文件夹
+        if(!utils::dirExists("./DATA")){
+            utils::_mkdir("./DATA");
+        }
+        std::string filename="./DATA\\level_" + to_string(i);
+        const char* tmp=filename.c_str();
+        if(!utils::dirExists(tmp)){
+            utils::_mkdir(tmp);
+        }
         Level *level=new Level(i);
         this->file_level.push_back(level);
     }
@@ -233,7 +251,7 @@ void KVStore::Compa_level0() {
     Level* level1=this->file_level[1];
     int i=0;
     //搜寻所有键值有交集的sstable
-    while(level1->is_create[i]){
+    while(i<level1->file.size()&&level1->is_create[i]){
         sstable_min=level1->file[i]->getminkey();
         sstable_max=level1->file[i]->getmaxkey();
         if(if_cross(sstable_min,sstable_max,min_key,max_key)){
@@ -246,7 +264,7 @@ void KVStore::Compa_level0() {
     //先把level0中的路放进去
     i=0;
     string filename;
-    while(this->file_level[0]->is_create[i]){
+    while(i<this->file_level[0]->file.size()&&this->file_level[0]->is_create[i]){
         //取文件
         filename = "./DATA\\level_" + to_string(0) + "\\sstable_" + to_string(this->file_level[0]->file[i]->seq_num);
         vector<comp_node*> waytmp=this->file_level[0]->file[i]->sstable->get_all_node(filename);
@@ -274,29 +292,35 @@ void KVStore::Compa_level0() {
             utils::rmfile(filename.c_str());
             continue;
         }
-        //其余sstable_wrap*往前移动,先取得第一个要移动的下标
-        i=indexSet[indexSet.size()-1]+1;
-        while(level1->is_create[i]){
-            //移动
-            level1->is_create[i-indexSet.size()]=true;
-            level1->file[i-indexSet.size()]=level1->file[i];
-            //清空i位置
-            level1->is_create[i]= false;
-            level1->file[i]= nullptr;
-            i++;
-        }
+        //前移，覆盖去掉的空位置
+        level1->move_forword();
     }
     vector<vector<comp_node*>> next_wayGroup;
-    //进行归并以及写入
-    for(int i=0;i<this->file_level.size();i++){
-        next_wayGroup=this->file_level[i]->merge(wayGroup);
-        if(next_wayGroup.empty()) break;
+    //进行归并以及写入,从第二层开始
+    int level_num=1;
+    while(true){
+        if(level_num>=this->file_level.size()){
+            this->addlevel(level_num+1);
+        }
+        if(!utils::dirExists("./DATA")){
+            utils::_mkdir("./DATA");
+        }
+        std::string filename="./DATA\\level_" + to_string(level_num);
+        const char* tmp=filename.c_str();
+        if(!utils::dirExists(tmp)){
+            utils::_mkdir(tmp);
+        }
+        next_wayGroup=this->file_level[level_num]->merge(wayGroup);
+        if(next_wayGroup.empty()) {
+            this->clearVector(wayGroup);
+            break;
+        }
+        //释放资源
+        this->clearVector(wayGroup);
         wayGroup=next_wayGroup;
+        level_num++;
     }
-    //仍有多余未合并但是层数已经满
-    addlevel(this->file_level.size()+1);
-    //写入新层
-    this->file_level[this->file_level.size()-1]->merge(wayGroup);
+
 }
 
 bool KVStore::if_cross(int min1,int max1,int min2,int max2) {
@@ -304,6 +328,17 @@ bool KVStore::if_cross(int min1,int max1,int min2,int max2) {
     int length=max1-min1+max2-min2;
     if(distance>length) return false;
     else return true;
+}
+
+void KVStore::clearVector(vector<vector<comp_node*>> &A) {
+  for(int i=0;i<A.size();i++){
+      for(int j=0;j<A[i].size();j++){
+          delete A[i][j];
+          A[i][j]= nullptr;
+      }
+      A[i].clear();
+  }
+  A.clear();
 }
 
 //KVStore::KVStore() {

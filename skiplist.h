@@ -8,7 +8,7 @@
 #include "sstable.h"
 #include <vector>
 #include <string>
-
+//#include "LeakDetector.h"
 struct Node {
     Node* right, * down;   //向右向下足矣
     uint64_t key;

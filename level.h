@@ -6,6 +6,7 @@
 #define LSM_LEVEL_H
 #include "skiplist.h"
 #include "sstable.h"
+//#include "LeakDetector.h"
 //建立sstable* 和sstable文件的联系
 struct Sstable_Wrap{
     Sstable * sstable;
@@ -31,11 +32,13 @@ struct Sstable_Wrap{
 };
 class Level{
 public:
+    //标明哪层
     int level_id;
     //.sst文件后缀,新建的时候用,防止重名
     int sstable_id=0;
-    //int cap=0; //level中存储了多少sstable
+    //is_create和file一一对应
     bool *is_create;
+    //时间戳越大的越后面
     vector<Sstable_Wrap*> file;
     Level(int id){
         this->level_id=id;
@@ -55,12 +58,15 @@ public:
             }
         }
     }
-    //kvstore调用，参数为sstable*以及.sst的后缀数字，注意时间戳越大越往后插入
+    //接口供kvstore调用，参数为sstable*以及.sst的后缀数字，注意时间戳越大越往后插入
     void add_sstable(Sstable * sstable,int sstable_seq_num);
     //判断一层是否满了
     bool if_full();
+    //处理函数，把Sstable_wrap*往前移动，覆盖空的位置
+    void move_forword();
     //找到最新的value
     std::string get(uint64_t key);
+    void clearVector(vector<vector<comp_node*>> &A);
     //找到这层的range
     void GetLevelRange(uint64_t &minkey,uint64_t& maxkey);
     //由多路vector<com_node*> 归并后加入该层，返回要加入下层的vector<com_node*>
@@ -69,7 +75,6 @@ public:
     vector<comp_node*> kMergeSort(vector<vector<comp_node*>>,int start,int end);
     //两路归并
     vector<comp_node*> mergeTwoArrays(vector<comp_node*>A,vector<comp_node*> B);
-    //由vector<comp_node*> 生成vector<Sstable_wrap*>,并要求在文件中写
     //把vector<comp_node*>转成 vector<Sstable_Wrap *>，并在文件中写
     vector<Sstable_Wrap *> translate(vector<comp_node*> A);
     //把一个Sstable_wrap* 转成vector<comp_node*>

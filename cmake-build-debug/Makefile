@@ -141,33 +141,6 @@ LSM/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/build
 .PHONY : LSM/fast
 
-correctness.obj: correctness.cc.obj
-
-.PHONY : correctness.obj
-
-# target to build an object file
-correctness.cc.obj:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/correctness.cc.obj
-.PHONY : correctness.cc.obj
-
-correctness.i: correctness.cc.i
-
-.PHONY : correctness.i
-
-# target to preprocess a source file
-correctness.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/correctness.cc.i
-.PHONY : correctness.cc.i
-
-correctness.s: correctness.cc.s
-
-.PHONY : correctness.s
-
-# target to generate assembly for a file
-correctness.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/correctness.cc.s
-.PHONY : correctness.cc.s
-
 kvstore.obj: kvstore.cpp.obj
 
 .PHONY : kvstore.obj
@@ -221,6 +194,33 @@ level.s: level.cpp.s
 level.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/level.cpp.s
 .PHONY : level.cpp.s
+
+persistence.obj: persistence.cc.obj
+
+.PHONY : persistence.obj
+
+# target to build an object file
+persistence.cc.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/persistence.cc.obj
+.PHONY : persistence.cc.obj
+
+persistence.i: persistence.cc.i
+
+.PHONY : persistence.i
+
+# target to preprocess a source file
+persistence.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/persistence.cc.i
+.PHONY : persistence.cc.i
+
+persistence.s: persistence.cc.s
+
+.PHONY : persistence.s
+
+# target to generate assembly for a file
+persistence.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\LSM.dir\build.make CMakeFiles/LSM.dir/persistence.cc.s
+.PHONY : persistence.cc.s
 
 skiplist.obj: skiplist.cpp.obj
 
@@ -285,15 +285,15 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... LSM
-	@echo ... correctness.obj
-	@echo ... correctness.i
-	@echo ... correctness.s
 	@echo ... kvstore.obj
 	@echo ... kvstore.i
 	@echo ... kvstore.s
 	@echo ... level.obj
 	@echo ... level.i
 	@echo ... level.s
+	@echo ... persistence.obj
+	@echo ... persistence.i
+	@echo ... persistence.s
 	@echo ... skiplist.obj
 	@echo ... skiplist.i
 	@echo ... skiplist.s

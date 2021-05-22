@@ -10,6 +10,7 @@
 #include "kvstore_api.h"
 #include "level.h"
 #include <list>
+//#include "LeakDetector.h"
 //存储sst文件的层次以及路径信息
 struct  sstable_path{
     int level;
@@ -30,8 +31,6 @@ public:
     //由path取出所有的.sst文件
     //void getFiles( string path, vector<string>& files );
     KVStore(const std::string &dir);
-    //不带参数的kvstore
-    //KVStore();
     ~KVStore();
 
     void put(uint64_t key, const std::string &s) override;
@@ -49,6 +48,8 @@ public:
     void Compa_level0();
     //判断两个范围是否相交
     bool if_cross(int min1,int max1,int min2,int max2);
+    //釋放資源
+    void clearVector(vector<vector<comp_node*>>&A);
 };
 
 

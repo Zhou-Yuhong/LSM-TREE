@@ -15,7 +15,7 @@ void Level::make_sstable(Skiplist &skiplist) {
     //创建一个Vector保存所有的value
     vector<string> valueset;
     while(p){
-        //sstable插入key,这个过程处理了挺多东西
+        //sstable插入key,这个过程处理了挺多东西，key和value通过下标对应
         sstable->addkey(p->key);
         //先把value放在vector里
         valueset.push_back(p->val);
@@ -51,9 +51,8 @@ void Level::make_sstable(Skiplist &skiplist) {
     }
     //用于记录所有偏移量
     vector<unsigned int> offset_array;
-    //循环中存储偏移量
+    //在循环中存储偏移量
     unsigned int pos;
-    //unsigned int size;
     //存储value，并保存偏移量
     for(int j=0;j<sstable->header.num;j++){
         pos=out.tellp();
@@ -77,7 +76,6 @@ void Level::make_sstable(Skiplist &skiplist) {
     this->file[i]=sstable_wrap;
     this->is_create[i]=true;
     this->sstable_id++;
-    //this->cap++;
 }
 
 std::string Level::get(uint64_t key) {
@@ -87,11 +85,11 @@ std::string Level::get(uint64_t key) {
     }
     //先找到最新的sstable
     int i=0;
-    while(this->is_create[i]){
+    while(i<this->file.size()&&this->is_create[i]){
         i++;
     }
     std::string filename;
-    std::string result;
+    std::string result="";
     Sstable * sstable;
     //按新旧顺序找
     for(int index=i-1;index>=0;index--){
@@ -111,13 +109,14 @@ std::string Level::get(uint64_t key) {
             continue;
         }
     }
+    return result;
 }
 
 void Level::add_sstable(Sstable *sstable,int sstable_seq_num) {
 
    // this->file[index]=sstable;
     //this->is_create[index]=true;
-    //先找到合适的插入位置（时间戳以及是否为空）
+    //先找到合适的插入位置（通过时间戳以及是否为空判断）
     int index=0;
     while(this->is_create[index]&&(this->file[index]->sstable->header.time<sstable->header.time)){
         index++;
@@ -127,6 +126,7 @@ void Level::add_sstable(Sstable *sstable,int sstable_seq_num) {
     Sstable_Wrap *sstable_wrap=new Sstable_Wrap(sstable,sstable_seq_num);
     this->file[index]=sstable_wrap;
     this->is_create[index]=true;
+    //更新可用的不会重名的sstable_id
     this->sstable_id=(sstable_seq_num>sstable_id) ? sstable_seq_num+1:sstable_id;
     //this->cap++;
     return;
@@ -156,7 +156,7 @@ bool Level::if_full() {
 
 void Level::GetLevelRange(uint64_t &minkey,uint64_t& maxkey) {
      int i=0;
-     while(this->is_create[i]){
+     while(i<this->file.size()&&this->is_create[i]){
          minkey= this->file[i]->getminkey()>minkey ?  minkey:this->file[i]->getminkey();
          maxkey= this->file[i]->getmaxkey()>maxkey ?  this->file[i]->getmaxkey():maxkey;
          i++;
@@ -165,6 +165,7 @@ void Level::GetLevelRange(uint64_t &minkey,uint64_t& maxkey) {
 }
 //由vector<comp_node*> 生成vector<Sstable_wrap*>,并要求在文件中写
 vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
+    //TODO fix the bug
     vector<Sstable_Wrap*>result;
     Sstable* sstable=new Sstable();
     int cap=32+10240;
@@ -225,59 +226,50 @@ vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
 }
 //由多路vector<com_node*> 归并后加入该层，返回要加入下层的vector<com_node*>
 vector<vector<comp_node *>> Level::merge(vector<vector<comp_node *>> A) {
-    //save the result
+    //要返回的值
     vector<vector<comp_node*>> result;
     //把所有的路归并到一路
     vector<comp_node*> totle= kMergeSort(A,0,A.size()-1);
     //转化成一组sstable_wrap
     vector<Sstable_Wrap *> translate_result=this->translate(totle);
+
     //得到当前存储的sstablewrap数量
     int cap=0;
-    while(this->is_create[cap]){
+    while(cap<this->file.size()&&this->is_create[cap]){
         cap++;
     }
     //要加入下层的数量
     int extraNum=cap+translate_result.size()-this->file.size();
-    //没有超出，直接加到末尾就行
-    if(extraNum<=0){
-        for(int i=0;i<translate_result.size();i++){
-            this->is_create[cap]=true;
-            this->file[cap]=translate_result[i];
-            cap++;
-        }
+    if(extraNum<0) extraNum=0;
+    //push all the sstable_wrap* into a tmp vector
+    vector<Sstable_Wrap*> tmp;
+    //add the exist sstable_wrap*
+    for(int i=0;i<cap;i++){
+        tmp.push_back(this->file[i]);
+    }
+    //add the new made sstable_wrap*
+    for(int i=0;i<translate_result.size();i++){
+        tmp.push_back(translate_result[i]);
     }
     //有超出
-    else{
-       //translate the extra sstable_wrap* into vector<comp_node*>
-       for(int i=0;i<extraNum;i++){
-           vector<comp_node*> tmp= translate(this->file[i]);
-           result.push_back(tmp);
+    if(extraNum>0){
+          for(int i=0;i<extraNum;i++){
+           vector<comp_node*> comp_tmp= translate(tmp[i]);
+           result.push_back(comp_tmp);
            //delete the file,set the relate thing
-           string filename="./DATA\\level_"+to_string(this->level_id)+"\\sstable_"+ to_string(this->file[i]->seq_num);
+           string filename="./DATA\\level_"+to_string(this->level_id)+"\\sstable_"+ to_string(tmp[i]->seq_num);
            utils::rmfile(filename.c_str());
-           this->is_create[i]= false;
-           this->file[i]= nullptr;
-       }
-       //move the other sstable_wrap* foward
-       int move_begin_index=extraNum;
-       while(this->is_create[move_begin_index]){
-           this->file[move_begin_index-extraNum]=this->file[move_begin_index];
-           this->is_create[move_begin_index]=false;
-           this->is_create[move_begin_index-extraNum]=true;
-           this->file[move_begin_index]=nullptr;
-           move_begin_index++;
-       }
-       //add the new-made sstable_wrap*
-       int add_begin_index=0;
-       while(this->is_create[add_begin_index]){
-           add_begin_index++;
-       }
-       for(int i=0;i<translate_result.size();i++){
-           this->file[add_begin_index]=translate_result[i];
-           this->is_create[add_begin_index]=true;
-           add_begin_index++;
        }
     }
+    //copy the remain sstable_wrap* to this level
+    int z=0;
+
+    for(int i=extraNum;i<tmp.size();i++){
+        this->file[z]=tmp[i];
+        this->is_create[z]=true;
+        z++;
+    }
+
     return result;
 }
 //k路归并
@@ -328,6 +320,38 @@ vector<comp_node *> Level::translate(Sstable_Wrap * sstableWrap) {
     Sstable *sstable=sstableWrap->sstable;
     string filename="./DATA\\level_"+ to_string(this->level_id)+"\\sstable_"+ to_string(sstableWrap->seq_num);
     return sstable->get_all_node(filename);
+}
+
+void Level::move_forword() {
+     vector<Sstable_Wrap*>tmp;
+     int i=0;
+     //遍历，把所有Sstable_wrap都加入到tmp中
+     while(i<this->file.size()){
+
+         if(this->is_create[i]){
+             //加入Sstable_wrap，注意不能delete，因为分配的空间有用
+             tmp.push_back(this->file[i]);
+             this->is_create[i]= false;
+             this->file[i]= nullptr;
+         }
+         i++;
+     }
+     //把tmp分配回file
+     for(int j=0;j<tmp.size();j++){
+         this->is_create[j]=true;
+         this->file[j]=tmp[j];
+     }
+}
+
+void Level::clearVector(vector<vector<comp_node *>> &A) {
+    for(int i=0;i<A.size();i++){
+        for(int j=0;j<A[i].size();j++){
+            delete A[i][j];
+            A[i][j]= nullptr;
+        }
+        A[i].clear();
+    }
+    A.clear();
 }
 
 
