@@ -239,7 +239,7 @@ vector<int> KVStore::GetStringNum(string str) {
 }
 
 void KVStore::Compa_level0() {
-    uint64_t min_key=0;
+    uint64_t min_key=UINT64_MAX;
     uint64_t max_key=0;
     //得到第一层的key范围
     this->file_level[0]->GetLevelRange(min_key,max_key);

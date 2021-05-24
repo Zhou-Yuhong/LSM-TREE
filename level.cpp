@@ -165,7 +165,6 @@ void Level::GetLevelRange(uint64_t &minkey,uint64_t& maxkey) {
 }
 //由vector<comp_node*> 生成vector<Sstable_wrap*>,并要求在文件中写
 vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
-    //TODO fix the bug
     vector<Sstable_Wrap*>result;
     Sstable* sstable=new Sstable();
     int cap=32+10240;
@@ -225,10 +224,32 @@ vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
     return result;
 }
 //由多路vector<com_node*> 归并后加入该层，返回要加入下层的vector<com_node*>
-vector<vector<comp_node *>> Level::merge(vector<vector<comp_node *>> A) {
+vector<vector<comp_node *>> Level::merge( vector<vector<comp_node *>> &A) {
     //要返回的值
     vector<vector<comp_node*>> result;
-    //把所有的路归并到一路
+    //把所有的路归并到一路来获得范围
+    vector<comp_node*> get_range= kMergeSort(A,0,A.size()-1);
+    uint64_t min=UINT64_MAX;
+    uint64_t max=0;
+    //获得totle的最大最小键值
+    this->get_road_range(get_range,min,max);
+    //从该层找出键值有交叉的，为了防止内存泄漏，都加到A里
+    int i=0;
+    while(i<this->file.size()&&this->is_create[i]){
+         uint64_t sstable_min=this->file[i]->sstable->header.min_key;
+         uint64_t sstable_max=this->file[i]->sstable->header.max_key;
+         if(this->if_cross(sstable_min,sstable_max,min,max)){
+             //加入要归并的路
+             A.push_back(this->translate(this->file[i]));
+             //删除文件
+             string filename="./DATA\\level_"+ to_string(this->level_id)+"\\sstable_"+ to_string(this->file[i]->seq_num);
+             utils::rmfile(filename.c_str());
+             //修改内存
+             this->file[i]= nullptr;
+             this->is_create[i]=false;
+         }
+         i++;
+     }
     vector<comp_node*> totle= kMergeSort(A,0,A.size()-1);
     //转化成一组sstable_wrap
     vector<Sstable_Wrap *> translate_result=this->translate(totle);
@@ -244,6 +265,8 @@ vector<vector<comp_node *>> Level::merge(vector<vector<comp_node *>> A) {
     //push all the sstable_wrap* into a tmp vector
     vector<Sstable_Wrap*> tmp;
     //add the exist sstable_wrap*
+    //先把空位补上
+    this->move_forword();
     for(int i=0;i<cap;i++){
         tmp.push_back(this->file[i]);
     }
@@ -354,6 +377,13 @@ void Level::clearVector(vector<vector<comp_node *>> &A) {
         A[i].clear();
     }
     A.clear();
+}
+
+void Level::get_road_range(vector<comp_node*>&A,uint64_t& min,uint64_t &max) {
+    for(int i=0;i<A.size();i++){
+        if(A[i]->key>max) max=A[i]->key;
+        if(A[i]->key<min) min=A[i]->key;
+    }
 }
 
 

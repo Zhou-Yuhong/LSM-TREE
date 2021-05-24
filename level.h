@@ -70,7 +70,7 @@ public:
     //找到这层的range
     void GetLevelRange(uint64_t &minkey,uint64_t& maxkey);
     //由多路vector<com_node*> 归并后加入该层，返回要加入下层的vector<com_node*>
-    vector<vector<comp_node*>> merge(vector<vector<comp_node*>>);
+    vector<vector<comp_node*>> merge( vector<vector<comp_node*>>&);
     //多路归并，递归实现
     vector<comp_node*> kMergeSort(vector<vector<comp_node*>>&,int start,int end);
     //两路归并
@@ -79,6 +79,13 @@ public:
     vector<Sstable_Wrap *> translate(vector<comp_node*> A);
     //把一个Sstable_wrap* 转成vector<comp_node*>
     vector<comp_node *> translate(Sstable_Wrap * sstableWrap);
+    void get_road_range(vector<comp_node*>&A,uint64_t &min,uint64_t &max);
+    bool if_cross(int min1,int max1,int min2,int max2) {
+        int distance= (max2-min1)>0 ? max2-min1:max1-min2;
+        int length=max1-min1+max2-min2;
+        if(distance>length) return false;
+        else return true;
+    }
 };
 
 
