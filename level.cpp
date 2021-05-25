@@ -245,6 +245,7 @@ vector<vector<comp_node *>> Level::merge( vector<vector<comp_node *>> &A) {
              string filename="./DATA\\level_"+ to_string(this->level_id)+"\\sstable_"+ to_string(this->file[i]->seq_num);
              utils::rmfile(filename.c_str());
              //修改内存
+             delete this->file[i];
              this->file[i]= nullptr;
              this->is_create[i]=false;
          }
@@ -384,6 +385,39 @@ void Level::get_road_range(vector<comp_node*>&A,uint64_t& min,uint64_t &max) {
         if(A[i]->key>max) max=A[i]->key;
         if(A[i]->key<min) min=A[i]->key;
     }
+}
+
+void Level::Remove_delete() {
+     vector<vector<comp_node*>> A;
+     int i=0;
+     while(i<this->file.size()&&this->is_create[i]){
+         //加入路
+         A.push_back(this->translate(this->file[i]));
+         //删除文件
+         string filename = "./DATA\\level_" + to_string(this->level_id) + "\\sstable_" + to_string(file[i]->seq_num);
+         utils::rmfile(filename.c_str());
+         //修改内存
+         delete this->file[i];
+         this->file[i]= nullptr;
+         this->is_create[i]= false;
+         i++;
+     }
+     //转成一路
+     vector<comp_node*> totle=this->kMergeSort(A,0,A.size()-1);
+     //去掉totle中的”~DELETE“
+     for(int j=totle.size()-1;j>=0;j--){
+         if(totle[j]->val=="~DELETED~")
+         {   delete totle[j];
+             totle.erase(totle.begin()+j);}
+     }
+     //转成一组sstable_wrap
+     vector<Sstable_Wrap*> translate_result=this->translate(totle);
+     for(int z=0;z<translate_result.size();z++){
+         this->file[z]=translate_result[z];
+         this->is_create[z]=true;
+     }
+     //释放内存空间
+     this->clearVector(A);
 }
 
 

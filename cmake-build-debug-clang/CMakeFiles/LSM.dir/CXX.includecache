@@ -6,16 +6,6 @@
 
 #IncludeRegexTransform: 
 
-D:/Clion/LSM/correctness.cc
-iostream
--
-cstdint
--
-string
--
-test.h
-D:/Clion/LSM/test.h
-
 D:/Clion/LSM/kvstore.cpp
 kvstore.h
 D:/Clion/LSM/kvstore.h
@@ -73,16 +63,6 @@ vector
 -
 string
 -
-
-D:/Clion/LSM/test.h
-iostream
--
-cstdint
--
-string
--
-kvstore.h
-D:/Clion/LSM/kvstore.h
 
 D:/Clion/LSM/utils.h
 sstream

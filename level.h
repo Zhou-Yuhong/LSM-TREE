@@ -86,6 +86,8 @@ public:
         if(distance>length) return false;
         else return true;
     }
+    //去除该层所有的”~DELETE~“
+    void Remove_delete();
 };
 
 

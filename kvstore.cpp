@@ -315,12 +315,24 @@ void KVStore::Compa_level0() {
             this->clearVector(wayGroup);
             break;
         }
+        if(level_num==this->file_level.size()-1){
+            this->file_level[level_num]->Remove_delete();
+            for(int first=0;first<next_wayGroup.size();first++){
+                for(int second=next_wayGroup[first].size()-1;second>=0;second--){
+                    if(next_wayGroup[first][second]->val=="~DELETED~")
+                    {   delete next_wayGroup[first][second];
+                        next_wayGroup[first].erase(next_wayGroup[first].begin()+second);}
+                }
+            }
+        }
         //释放资源
         this->clearVector(wayGroup);
         wayGroup=next_wayGroup;
         level_num++;
     }
-
+    //如果合并一直到了底层，那么进行删除”~DELETE~“操作
+//    if(level_num==this->file_level.size()-1)
+//    this->file_level[level_num]->Remove_delete();
 }
 
 bool KVStore::if_cross(int min1,int max1,int min2,int max2) {
