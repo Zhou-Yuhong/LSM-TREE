@@ -170,15 +170,22 @@ vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
     int cap=32+10240;
     unsigned int offset_tmp=0;
     vector<string> valueGroup;
+    //vector<int> lengthGroup;
+    //int begin_index=0;
     vector<uint64_t> keyGroup;
     vector<unsigned int> offsetGroup;
-    for(int i=0;i<A.size();i++){
+    int totle_size=A.size();
+    for(int i=0;i<totle_size;i++){
+        //i=4445
+        uint64_t key=A[i]->key;
         sstable->addkey(A[i]->key);
         keyGroup.push_back(A[i]->key);
+//        string val=A[i]->val;
         valueGroup.push_back(A[i]->val);
-        cap+=(A[i]->val).length()+12;
+        cap+=A[i]->val.length()+12;
+        //lengthGroup.push_back(A[i]->val.length());
         //如果满了，或者读完了，则写入文件
-        if(cap>=2048*1000||i==A.size()-1){
+        if(cap>=2048*1000||i==totle_size-1){
             string filename="./DATA\\level_"+ to_string(this->level_id)+"\\sstable_"+ to_string(this->sstable_id);
             ofstream out(filename,ios::out|ios::binary);
             //写头部
@@ -198,8 +205,8 @@ vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
                 offset_tmp=out.tellp();
                 offsetGroup.push_back(offset_tmp);
                 //把string转成char*写
-                const char* input=valueGroup[j].c_str();
-                out.write(input,valueGroup[j].size());
+               // const char* input=valueGroup[j].c_str();
+                out.write(valueGroup[j].c_str(),valueGroup[j].length());
             }
             //回写偏移量
             offset_tmp=32+10240+8;
@@ -217,6 +224,7 @@ vector<Sstable_Wrap *> Level::translate(vector<comp_node *>A) {
             cap=32+10240;
             keyGroup.clear();
             valueGroup.clear();
+            //lengthGroup.clear();
             offsetGroup.clear();
             sstable=new Sstable();
         }
@@ -257,8 +265,12 @@ vector<vector<comp_node *>> Level::merge( vector<vector<comp_node *>> &A) {
 
     //得到当前存储的sstablewrap数量
     int cap=0;
-    while(cap<this->file.size()&&this->is_create[cap]){
-        cap++;
+    int cc=0;
+    while(cc<this->file.size()){
+        if(this->is_create[cc]){
+            cap++;
+        }
+        cc++;
     }
     //要加入下层的数量
     int extraNum=cap+translate_result.size()-this->file.size();
@@ -297,7 +309,7 @@ vector<vector<comp_node *>> Level::merge( vector<vector<comp_node *>> &A) {
     return result;
 }
 //k路归并
-vector<comp_node *> Level::kMergeSort(vector<vector<comp_node *>> &A, int start, int end) {
+vector<comp_node *> Level::kMergeSort( vector<vector<comp_node *>> A, int start, int end) {
     if(start >=end){
         return A[start];
     }
@@ -322,12 +334,10 @@ vector<comp_node *> Level::mergeTwoArrays(vector<comp_node *>&A,vector<comp_node
         if (A[i]->key == B[j]->key) {
             if (A[i]->time > B[j]->time) {
                 temp.push_back(A[i++]);
-                delete B[j];
                 j++;
                 continue;
             } else {
                 temp.push_back(B[j++]);
-                delete A[i];
                 i++;
                 continue;
             }

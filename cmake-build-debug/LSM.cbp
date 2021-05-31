@@ -85,9 +85,6 @@
 		<Unit filename="D:/Clion/LSM/MurmurHash3.h">
 			<Option target="LSM"/>
 		</Unit>
-		<Unit filename="D:/Clion/LSM/correctness.cc">
-			<Option target="LSM"/>
-		</Unit>
 		<Unit filename="D:/Clion/LSM/kvstore.cpp">
 			<Option target="LSM"/>
 		</Unit>
@@ -101,6 +98,9 @@
 			<Option target="LSM"/>
 		</Unit>
 		<Unit filename="D:/Clion/LSM/level.h">
+			<Option target="LSM"/>
+		</Unit>
+		<Unit filename="D:/Clion/LSM/persistence.cc">
 			<Option target="LSM"/>
 		</Unit>
 		<Unit filename="D:/Clion/LSM/skiplist.cpp">

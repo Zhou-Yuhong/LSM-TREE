@@ -6,32 +6,12 @@
 
 #IncludeRegexTransform: 
 
-D:/Clion/LSM/kvstore.cpp
-kvstore.h
-D:/Clion/LSM/kvstore.h
-string
--
-cwchar
--
-io.h
--
-cstring
--
-utils.h
-D:/Clion/LSM/utils.h
-
-D:/Clion/LSM/kvstore.h
-kvstore_api.h
-D:/Clion/LSM/kvstore_api.h
+D:/Clion/LSM/level.cpp
 level.h
 D:/Clion/LSM/level.h
-list
--
-
-D:/Clion/LSM/kvstore_api.h
-cstdint
--
-string
+utils.h
+D:/Clion/LSM/utils.h
+fstream
 -
 
 D:/Clion/LSM/level.h

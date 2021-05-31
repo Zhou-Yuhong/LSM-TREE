@@ -6,20 +6,6 @@
 
 #IncludeRegexTransform: 
 
-D:/Clion/LSM/kvstore.cpp
-kvstore.h
-D:/Clion/LSM/kvstore.h
-string
--
-cwchar
--
-io.h
--
-cstring
--
-utils.h
-D:/Clion/LSM/utils.h
-
 D:/Clion/LSM/kvstore.h
 kvstore_api.h
 D:/Clion/LSM/kvstore_api.h
@@ -34,19 +20,23 @@ cstdint
 string
 -
 
-D:/Clion/LSM/level.cpp
-level.h
-D:/Clion/LSM/level.h
-utils.h
-D:/Clion/LSM/utils.h
-fstream
--
-
 D:/Clion/LSM/level.h
 skiplist.h
 D:/Clion/LSM/skiplist.h
 sstable.h
 D:/Clion/LSM/sstable.h
+
+D:/Clion/LSM/persistence.cc
+iostream
+-
+cstdint
+-
+string
+-
+cassert
+-
+test.h
+D:/Clion/LSM/test.h
 
 D:/Clion/LSM/skiplist.h
 sstable.h
@@ -64,25 +54,13 @@ vector
 string
 -
 
-D:/Clion/LSM/utils.h
-sstream
+D:/Clion/LSM/test.h
+iostream
 -
-sys/stat.h
+cstdint
 -
-vector
+string
 -
-sys/types.h
--
-direct.h
--
-stdio.h
--
-io.h
--
-windows.h
--
-dirent.h
--
-unistd.h
--
+kvstore.h
+D:/Clion/LSM/kvstore.h
 

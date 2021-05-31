@@ -21,7 +21,7 @@ private:
 			EXPECT(std::string(i+1, 's'), store.get(i));
 		}
 		phase();
-
+        // string m=store.get(6881);
 		// Test after all insertions
 		for (i = 0; i < max; ++i)
 			EXPECT(std::string(i+1, 's'), store.get(i));
@@ -30,23 +30,44 @@ private:
 		// Test deletions
 		for (i = 0; i < max; i+=2)
 			EXPECT(true, store.del(i));
-
+         //m=store.get(6881);
 		// Prepare data for Test Mode
 		for (i = 0; i < max; ++i) {
+//		    m=store.get(6881);
+//		    if(m==""){
+//		        //值在i为6777时
+//		        int wdnmd=i;
+//		    }
 			switch (i & 3) {
 			case 0:
 				EXPECT(not_found, store.get(i));
+//				if(store.get(i)!=not_found){
+//				    string fuck=store.get(i);
+//				    int wdnmd=0;
+//				}
 				store.put(i, std::string(i+1, 't'));
 				break;
 			case 1:
 				EXPECT(std::string(i+1, 's'), store.get(i));
+//				if(store.get(i)!=std::string(i+1,'s')){
+//				    string fuck=store.get(i);
+//				    int wdnmd=0;
+//				}
 				store.put(i, std::string(i+1, 't'));
 				break;
 			case 2:
 				EXPECT(not_found, store.get(i));
+//				if(store.get(i)!=not_found){
+//				    string fuck=store.get(i);
+//				    int wdnmd=0;
+//				}
 				break;
 			case 3:
 				EXPECT(std::string(i+1, 's'), store.get(i));
+//				if(store.get(i)!=std::string(i+1,'s')){
+//				    string fuck=store.get(i);
+//				    int wdnmd=0;
+//				}
 				break;
 			default:
 				assert(0);

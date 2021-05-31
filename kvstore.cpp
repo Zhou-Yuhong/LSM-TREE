@@ -146,13 +146,14 @@ bool KVStore::del(uint64_t key)
     }
     //未在skiplist里找到，增加一条键值为key，标记为删除的记录
     else{
-        this->skiplist->put(key,"~DELETED~");
-        if(this->skiplist->getcap()>2048*1000) {
-            //暂时都放到14层
-            this->file_level[14]->make_sstable(*this->skiplist);
-            //reset Skiplist
-            skiplist->reset();
-        }
+        this->put(key,"~DELETED~");
+//        if(this->skiplist->getcap()>2048*1000) {
+//            //暂时都放到14层
+//            this->file_level[14]->make_sstable(*this->skiplist);
+//            //reset Skiplist
+//            skiplist->reset();
+//        }
+       // this->skiplist->put(key,"~DELETED~");
         return true;
     }
 }
@@ -162,7 +163,37 @@ bool KVStore::del(uint64_t key)
  * including memtable and all sstables files.
  */
 void KVStore::reset()
-{
+{    //从dir中读出所有sstable文件
+    std::vector<string> first_level_files;
+    std::string first_filename;
+    utils::scanDir("./DATA",first_level_files);
+    std::vector<string> second_level_files;
+    std::vector<string> fullname_files;
+    for(int i=0;i<first_level_files.size();i++){
+        first_filename=first_level_files[i];
+        utils::scanDir("./DATA\\"+first_filename,second_level_files);
+        for(int j=0;j<second_level_files.size();j++) {
+            fullname_files.push_back("./DATA\\" + first_filename + "\\" + second_level_files[j]);
+        }
+        second_level_files.clear();
+    }
+    for(int i=0;i<fullname_files.size();i++){
+        utils::rmfile(fullname_files[i].c_str());
+    }
+    for(int i=0;i<this->file_level.size();i++){
+        string level_name="./DATA\\level_"+ to_string(i);
+        utils::rmdir(level_name.c_str());
+    }
+    for(int i=0;i<this->file_level.size();i++){
+        delete file_level[i];
+    }
+    file_level.clear();
+    Level* level=new Level(0);
+    this->file_level.push_back(level);
+//    Level* level1=new Level(1);
+//    this->file_level.push_back(level1);
+    this->skiplist->reset();
+
 }
 
 
@@ -251,14 +282,14 @@ void KVStore::Compa_level0() {
     Level* level1=this->file_level[1];
     int i=0;
     //搜寻所有键值有交集的sstable
-    while(i<level1->file.size()&&level1->is_create[i]){
-        sstable_min=level1->file[i]->getminkey();
-        sstable_max=level1->file[i]->getmaxkey();
-        if(if_cross(sstable_min,sstable_max,min_key,max_key)){
-            indexSet.push_back(i);
-        }
-        i++;
-    }
+//    while(i<level1->file.size()&&level1->is_create[i]){
+//        sstable_min=level1->file[i]->getminkey();
+//        sstable_max=level1->file[i]->getmaxkey();
+//        if(if_cross(sstable_min,sstable_max,min_key,max_key)){
+//            indexSet.push_back(i);
+//        }
+//        i++;
+//    }
     //存储所有要归并的sstable中的value
     vector<vector<comp_node*>>  wayGroup;
     //先把level0中的路放进去
@@ -279,22 +310,22 @@ void KVStore::Compa_level0() {
     //把level0中的sst起始下标置0
     this->file_level[0]->sstable_id=0;
     //把level1中的放进去,前提是indexSet非空
-    if(!indexSet.empty()) {
-        for (i = 0; i < indexSet.size(); i++) {
-            //取走同时把,is_create设空，file设空
-            filename = "./DATA\\level_" + to_string(1) + "\\sstable_" + to_string(level1->file[indexSet[i]]->seq_num);
-            vector<comp_node *> waytmp = level1->file[indexSet[i]]->sstable->get_all_node(filename);
-            wayGroup.push_back(waytmp);
-            //删除文件夹中的文件，把内存中的is_create和file清空
-            level1->is_create[indexSet[i]] = false;
-            delete level1->file[indexSet[i]];
-            level1->file[indexSet[i]] = nullptr;
-            utils::rmfile(filename.c_str());
-            continue;
-        }
-        //前移，覆盖去掉的空位置
-        level1->move_forword();
-    }
+//    if(!indexSet.empty()) {
+//        for (i = 0; i < indexSet.size(); i++) {
+//            //取走同时把,is_create设空，file设空
+//            filename = "./DATA\\level_" + to_string(1) + "\\sstable_" + to_string(level1->file[indexSet[i]]->seq_num);
+//            vector<comp_node *> waytmp = level1->file[indexSet[i]]->sstable->get_all_node(filename);
+//            wayGroup.push_back(waytmp);
+//            //删除文件夹中的文件，把内存中的is_create和file清空
+//            level1->is_create[indexSet[i]] = false;
+//            delete level1->file[indexSet[i]];
+//            level1->file[indexSet[i]] = nullptr;
+//            utils::rmfile(filename.c_str());
+//            continue;
+//        }
+//        //前移，覆盖去掉的空位置
+//        level1->move_forword();
+//    }
     vector<vector<comp_node*>> next_wayGroup;
     //进行归并以及写入,从第二层开始
     int level_num=1;
@@ -315,16 +346,16 @@ void KVStore::Compa_level0() {
             this->clearVector(wayGroup);
             break;
         }
-        if(level_num==this->file_level.size()-1){
-            this->file_level[level_num]->Remove_delete();
-            for(int first=0;first<next_wayGroup.size();first++){
-                for(int second=next_wayGroup[first].size()-1;second>=0;second--){
-                    if(next_wayGroup[first][second]->val=="~DELETED~")
-                    {   delete next_wayGroup[first][second];
-                        next_wayGroup[first].erase(next_wayGroup[first].begin()+second);}
-                }
-            }
-        }
+//        if(level_num==this->file_level.size()-1){
+//            this->file_level[level_num]->Remove_delete();
+//            for(int first=0;first<next_wayGroup.size();first++){
+//                for(int second=next_wayGroup[first].size()-1;second>=0;second--){
+//                    if(next_wayGroup[first][second]->val=="~DELETED~")
+//                    {   delete next_wayGroup[first][second];
+//                        next_wayGroup[first].erase(next_wayGroup[first].begin()+second);}
+//                }
+//            }
+//        }
         //释放资源
         this->clearVector(wayGroup);
         wayGroup=next_wayGroup;
